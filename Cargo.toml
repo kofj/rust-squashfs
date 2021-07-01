@@ -1,0 +1,14 @@
+[package]
+name = "rust-squashfs"
+version = "0.1.0"
+authors = ["疯魔慕薇 <kfanjian@gmail.com>"]
+edition = "2018"
+documentation = "https://docs.rs/squashfs"
+repository = "https://github.com/kofj/rust-squashfs"
+readme = "README.md"
+keywords = ["squashfs", "sqs"]
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]

@@ -20,3 +20,14 @@ macro_rules! map_error {
     )
   };
 }
+
+/// Custom invalid data error
+#[macro_export]
+macro_rules! invalid_error {
+  ($msg:expr) => {{
+    std::io::Error::new(
+      std::io::ErrorKind::InvalidData,
+      format!("Error {} at {}:{}", $msg, file!(), line!()),
+    )
+  }};
+}

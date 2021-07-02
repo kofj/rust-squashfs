@@ -407,6 +407,7 @@ name = "squashfs"
 version = "0.1.0"
 dependencies = [
  "bitflags",
+ "byteorder",
  "flate2",
  "flexi_logger",
  "log",

@@ -3,17 +3,18 @@ use crate::SqsIoReader;
 use prettytable::Table;
 use std::fmt;
 use std::io::Result;
-use std::mem::size_of;
 
 pub const MAGIC_NUMBER: u32 = 0x7371_7368;
 pub const VERSION_MAJOR: u16 = 4;
 pub const VERSION_MINOR: u16 = 0;
 
+#[macro_export]
 macro_rules! impl_converter {
   ($T: ty) => {
     impl AsRef<[u8]> for $T {
       #[inline]
       fn as_ref(&self) -> &[u8] {
+        use std::mem::size_of;
         let ptr = self as *const $T as *const u8;
         unsafe { &*std::slice::from_raw_parts(ptr, size_of::<$T>()) }
       }
@@ -22,6 +23,7 @@ macro_rules! impl_converter {
     impl AsMut<[u8]> for $T {
       #[inline]
       fn as_mut(&mut self) -> &mut [u8] {
+        use std::mem::size_of;
         let ptr = self as *mut $T as *mut u8;
         unsafe { &mut *std::slice::from_raw_parts_mut(ptr, size_of::<$T>()) }
       }
@@ -245,22 +247,16 @@ impl fmt::Display for InodeRef {
 
 #[cfg(test)]
 mod tests {
-  use crate::layout::Superblock;
-  use crate::layout::{MAGIC_NUMBER, VERSION_MAJOR, VERSION_MINOR};
-  use crate::SqsIoReader;
-  use std::fs::File;
+  use super::*;
+  use crate::tests::*;
   use std::io::Result;
   use std::mem::size_of;
 
   #[test]
+  // #[ignore]
   fn read_superblock() -> Result<()> {
-    println!("Superblock size: {}", size_of::<Superblock>());
-    let f = File::open("tests/data/gzip.sqs")?;
-    let mut reader = Box::new(f.try_clone().unwrap()) as SqsIoReader;
-
-    let mut sb = Superblock::new();
-    sb.load(&mut reader)?;
-
+    debug!("Superblock size: {}", size_of::<Superblock>());
+    let (_, sb) = prepare_tests()?;
     sb.to_table().printstd();
 
     assert_eq!(sb.magic, MAGIC_NUMBER);

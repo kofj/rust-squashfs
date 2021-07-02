@@ -41,11 +41,21 @@ extern crate prettytable;
 #[macro_use]
 extern crate log;
 
+use flexi_logger::{colored_opt_format, Logger};
 use std::fs::File;
-use std::io::{Read, Seek};
+use std::io::{Read, Result, Seek};
 
 pub mod compress;
+pub mod fragment;
 pub mod layout;
+pub mod metadata;
+pub mod utils;
+
+pub use fragment::*;
+pub use layout::*;
+pub use log::LevelFilter;
+pub use metadata::*;
+pub use utils::errors::*;
 
 pub trait SqsIoRead: Read + Seek {}
 
@@ -67,8 +77,37 @@ pub fn set_logging(level: LevelFilter) -> Result<()> {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    use super::*;
+    use std::env;
+    use std::fs::File;
+    use std::io::Result;
+    use std::sync::Once;
+
+    static TEST_LOGGER_INIT: Once = Once::new();
+
+    pub fn prepare_tests() -> Result<(SqsIoReader, Superblock)> {
+        TEST_LOGGER_INIT.call_once(move || {
+            if let Ok(level) = env::var("RUST_LOG") {
+                if level == "trace" {
+                    set_logging(LevelFilter::Trace).unwrap();
+                }
+            } else {
+                set_logging(LevelFilter::Debug).unwrap();
+            }
+        });
+
+        let test_sqs_file =
+            if let Ok(env) = std::env::var("TEST_SQS_FILE").map_err(|e| map_other_error!(e)) {
+                env
+            } else {
+                String::from("tests/data/gzip.sqs")
+            };
+        let f = File::open(test_sqs_file).map_err(|e| map_error!(e))?;
+        let mut reader = Box::new(f.try_clone()?) as SqsIoReader;
+
+        let mut sb = Superblock::new();
+        sb.load(&mut reader)?;
+
+        Ok((reader, sb))
     }
 }

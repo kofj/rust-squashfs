@@ -34,8 +34,19 @@ extern crate bitflags;
 // extern crate serde;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate smart_default;
 
-pub mod superblock;
+use std::fs::File;
+use std::io::{Read, Seek};
+
+pub mod layout;
+
+pub trait SqsIoRead: Read + Seek {}
+
+pub type SqsIoReader = Box<dyn SqsIoRead>;
+
+impl SqsIoRead for File {}
 
 #[cfg(test)]
 mod tests {

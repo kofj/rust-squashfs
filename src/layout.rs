@@ -1,8 +1,31 @@
+use crate::SqsIoReader;
 use std::fmt;
+use std::io::Result;
+use std::mem::size_of;
 
+macro_rules! impl_converter {
+  ($T: ty) => {
+    impl AsRef<[u8]> for $T {
+      #[inline]
+      fn as_ref(&self) -> &[u8] {
+        let ptr = self as *const $T as *const u8;
+        unsafe { &*std::slice::from_raw_parts(ptr, size_of::<$T>()) }
+      }
+    }
+
+    impl AsMut<[u8]> for $T {
+      #[inline]
+      fn as_mut(&mut self) -> &mut [u8] {
+        let ptr = self as *mut $T as *mut u8;
+        unsafe { &mut *std::slice::from_raw_parts_mut(ptr, size_of::<$T>()) }
+      }
+    }
+  };
+}
 pub const MAGIC_NUMBER: u32 = 0x7371_7368;
 
-#[derive(Debug)]
+#[repr(C)]
+#[derive(Debug, Default)]
 pub struct Superblock {
   /// Must match the value of 0x73717368 to be considered a squashfs archive
   pub magic: u32,
@@ -25,7 +48,7 @@ pub struct Superblock {
   /// 4 - XZ
   /// 5 - LZ4
   /// 6 - ZSTD
-  pub compression_id: Compression, //u16,
+  pub compression_id: u16, //
 
   /// The log2 of block_size. If block_size and block_log do not agree, the archive is considered corrupt
   pub block_log: u16,
@@ -65,6 +88,19 @@ pub struct Superblock {
 
   /// The byte offset at which the export table starts
   pub export_table_start: u64,
+}
+
+impl_converter!(Superblock);
+
+impl Superblock {
+  pub fn new() -> Self {
+    Self::default()
+  }
+
+  pub fn load(&mut self, r: &mut SqsIoReader) -> Result<()> {
+    r.read_exact(self.as_mut())?;
+    Ok(())
+  }
 }
 
 bitflags! {
@@ -122,8 +158,9 @@ impl fmt::Display for Flags {
 }
 
 #[repr(u16)]
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, SmartDefault)]
 pub enum Compression {
+  #[default]
   None = 0,
   Gzip,
   Lzma,
@@ -135,10 +172,25 @@ pub enum Compression {
 
 #[cfg(test)]
 mod tests {
+  use crate::layout::Superblock;
+  use crate::SqsIoReader;
+  use std::fs::File;
   use std::io::Result;
+  use std::mem::size_of;
 
   #[test]
   fn read_superblock() -> Result<()> {
+    println!("Superblock size: {}", size_of::<Superblock>());
+    let f = File::open("tests/data/gzip.sqs")?;
+    let mut reader = Box::new(f.try_clone().unwrap()) as SqsIoReader;
+
+    let mut sb = Superblock::new();
+    sb.load(&mut reader)?;
+
+    println!("{:?}\n", sb);
+    println!("version: {}.{}\n", sb.version_major, sb.version_minor);
+    println!("bytes_used: {}\n", sb.bytes_used);
+
     Ok(())
   }
 }

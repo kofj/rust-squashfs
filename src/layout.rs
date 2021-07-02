@@ -1,3 +1,4 @@
+use crate::compress::Algorithm;
 use crate::SqsIoReader;
 use prettytable::Table;
 use std::fmt;
@@ -61,7 +62,7 @@ pub struct Superblock {
   /// 4 - XZ
   /// 5 - LZ4
   /// 6 - ZSTD
-  pub compression_id: Compression,
+  pub compressor: Algorithm,
 
   /// The log2 of block_size. If block_size and block_log do not agree, the archive is considered corrupt
   pub block_log: u16,
@@ -69,7 +70,7 @@ pub struct Superblock {
   /// Superblock Flags, u16
   pub flags: Flags,
 
-  /// The number of entries in the id lookup table
+  /// The unique user or group IDs number of entries in the id lookup table
   pub id_count: u16,
 
   /// The major version of the squashfs file format. Should always equal 4
@@ -79,7 +80,7 @@ pub struct Superblock {
   pub version_minor: u16,
 
   /// A reference to the inode of the root directory of the archive
-  pub root_inode_ref: u64,
+  pub root_inode_ref: InodeRef, //u64,
 
   /// The number of bytes used by the archive. Because squashfs archives are often padded to 4KiB, this can often be less than the file size
   pub bytes_used: u64,
@@ -123,7 +124,7 @@ impl Superblock {
       ["modification_time", self.modification_time],
       ["block_size", self.block_size],
       ["fragment_entry_count", self.fragment_entry_count],
-      ["compression_id", self.compression_id],
+      ["compressor", self.compressor],
       ["block_log", self.block_log],
       ["flags", self.flags.to_table()],
       ["id_count", self.id_count],
@@ -143,10 +144,10 @@ impl Superblock {
 
 bitflags! {
   pub struct Flags: u16 {
-    // Inodes are stored uncompressed. For backward compatibility reasons, UID/GIDs are also stored uncompressed.
+    /// Inodes are stored uncompressed. For backward compatibility reasons, UID/GIDs are also stored uncompressed.
     const UNCOMPRESSED_INODES	= 0x0001;
 
-    // Data are stored uncompressed
+    /// Data are stored uncompressed
     const UNCOMPRESSED_DATA	= 0x0002;
 
     /// Unused in squashfs 4+. Should always be unset
@@ -173,7 +174,7 @@ bitflags! {
     /// Xattrs are not stored
     const NO_XATTRS	= 0x0200;
 
-    /// The compression options section is present
+    /// The compressor options section is present
     const COMPRESSOR_OPTIONS	= 0x0400;
 
     /// UID/GIDs are stored uncompressed. Note that the UNCOMPRESSED_INODES flag also has this effect. If that flag is set, this flag has no effect. This flag is currently only available on master in git, no released version of squashfs yet supports it.s
@@ -227,20 +228,15 @@ impl fmt::Display for Flags {
   }
 }
 
-#[repr(u16)]
-#[derive(Debug, Serialize, SmartDefault)]
-pub enum Compression {
-  #[default]
-  None = 0,
-  Gzip,
-  Lzma,
-  Lzo,
-  Xz,
-  Lz4,
-  Zstd,
+#[repr(C)]
+#[derive(Debug, Default)]
+pub struct InodeRef {
+  pub offset: u16,
+  pub block: u16,
+  padding: u32,
 }
 
-impl fmt::Display for Compression {
+impl fmt::Display for InodeRef {
   fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
     write!(f, "{}", format!("{:?}", self))?;
     Ok(())

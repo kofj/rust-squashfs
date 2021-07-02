@@ -42,6 +42,7 @@ extern crate prettytable;
 use std::fs::File;
 use std::io::{Read, Seek};
 
+pub mod compress;
 pub mod layout;
 
 pub trait SqsIoRead: Read + Seek {}

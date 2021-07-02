@@ -1,7 +1,12 @@
 use crate::SqsIoReader;
+use prettytable::Table;
 use std::fmt;
 use std::io::Result;
 use std::mem::size_of;
+
+pub const MAGIC_NUMBER: u32 = 0x7371_7368;
+pub const VERSION_MAJOR: u16 = 4;
+pub const VERSION_MINOR: u16 = 0;
 
 macro_rules! impl_converter {
   ($T: ty) => {
@@ -22,7 +27,15 @@ macro_rules! impl_converter {
     }
   };
 }
-pub const MAGIC_NUMBER: u32 = 0x7371_7368;
+
+macro_rules! has_flag {
+  ($H: ident, $F: ident) => {
+    #[inline]
+    pub fn $H(&self) -> bool {
+      self.contains(Flags::$F)
+    }
+  };
+}
 
 #[repr(C)]
 #[derive(Debug, Default)]
@@ -48,7 +61,7 @@ pub struct Superblock {
   /// 4 - XZ
   /// 5 - LZ4
   /// 6 - ZSTD
-  pub compression_id: u16, //
+  pub compression_id: Compression,
 
   /// The log2 of block_size. If block_size and block_log do not agree, the archive is considered corrupt
   pub block_log: u16,
@@ -101,10 +114,34 @@ impl Superblock {
     r.read_exact(self.as_mut())?;
     Ok(())
   }
+
+  pub fn to_table(&self) -> Table {
+    table!(
+      ["Field", "Value"],
+      ["magic", self.magic],
+      ["inode_count", self.inode_count],
+      ["modification_time", self.modification_time],
+      ["block_size", self.block_size],
+      ["fragment_entry_count", self.fragment_entry_count],
+      ["compression_id", self.compression_id],
+      ["block_log", self.block_log],
+      ["flags", self.flags.to_table()],
+      ["id_count", self.id_count],
+      ["version_major", self.version_major],
+      ["version_minor", self.version_minor],
+      ["root_inode_ref", self.root_inode_ref],
+      ["bytes_used", self.bytes_used],
+      ["id_table_start", self.id_table_start],
+      ["xattr_id_table_start", self.xattr_id_table_start],
+      ["inode_table_start", self.inode_table_start],
+      ["directory_table_start", self.directory_table_start],
+      ["fragment_table_start", self.fragment_table_start],
+      ["export_table_start", self.export_table_start]
+    )
+  }
 }
 
 bitflags! {
-  // #[derive(Clone, Debug)]
   pub struct Flags: u16 {
     // Inodes are stored uncompressed. For backward compatibility reasons, UID/GIDs are also stored uncompressed.
     const UNCOMPRESSED_INODES	= 0x0001;
@@ -144,6 +181,39 @@ bitflags! {
   }
 }
 
+impl Flags {
+  has_flag!(uncompressed_inodes, UNCOMPRESSED_INODES);
+  has_flag!(uncompressed_data, UNCOMPRESSED_DATA);
+  has_flag!(check, CHECK);
+  has_flag!(uncompressed_fragments, UNCOMPRESSED_FRAGMENTS);
+  has_flag!(no_fragments, NO_FRAGMENTS);
+  has_flag!(always_fragments, ALWAYS_FRAGMENTS);
+  has_flag!(duplicates, DUPLICATES);
+  has_flag!(exportable, EXPORTABLE);
+  has_flag!(uncompressed_xattrs, UNCOMPRESSED_XATTRS);
+  has_flag!(no_xattrs, NO_XATTRS);
+  has_flag!(compressor_options, COMPRESSOR_OPTIONS);
+  has_flag!(uncompressed_ids, UNCOMPRESSED_IDS);
+
+  pub fn to_table(&self) -> Table {
+    table!(
+      ["Flag", "Exist"],
+      [Flags::UNCOMPRESSED_INODES, self.uncompressed_inodes()],
+      [Flags::UNCOMPRESSED_DATA, self.uncompressed_data()],
+      [Flags::CHECK, self.check()],
+      [Flags::UNCOMPRESSED_FRAGMENTS, self.uncompressed_fragments()],
+      [Flags::NO_FRAGMENTS, self.no_fragments()],
+      [Flags::ALWAYS_FRAGMENTS, self.always_fragments()],
+      [Flags::DUPLICATES, self.duplicates()],
+      [Flags::EXPORTABLE, self.exportable()],
+      [Flags::UNCOMPRESSED_XATTRS, self.uncompressed_xattrs()],
+      [Flags::NO_XATTRS, self.no_xattrs()],
+      [Flags::COMPRESSOR_OPTIONS, self.compressor_options()],
+      [Flags::UNCOMPRESSED_IDS, self.uncompressed_ids()]
+    )
+  }
+}
+
 impl Default for Flags {
   fn default() -> Self {
     Flags::empty()
@@ -170,9 +240,17 @@ pub enum Compression {
   Zstd,
 }
 
+impl fmt::Display for Compression {
+  fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    write!(f, "{}", format!("{:?}", self))?;
+    Ok(())
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use crate::layout::Superblock;
+  use crate::layout::{MAGIC_NUMBER, VERSION_MAJOR, VERSION_MINOR};
   use crate::SqsIoReader;
   use std::fs::File;
   use std::io::Result;
@@ -187,9 +265,11 @@ mod tests {
     let mut sb = Superblock::new();
     sb.load(&mut reader)?;
 
-    println!("{:?}\n", sb);
-    println!("version: {}.{}\n", sb.version_major, sb.version_minor);
-    println!("bytes_used: {}\n", sb.bytes_used);
+    sb.to_table().printstd();
+
+    assert_eq!(sb.magic, MAGIC_NUMBER);
+    assert_eq!(sb.version_major, VERSION_MAJOR);
+    assert_eq!(sb.version_minor, VERSION_MINOR);
 
     Ok(())
   }

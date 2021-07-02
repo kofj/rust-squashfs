@@ -1,18 +1,21 @@
 [package]
-name = "rust-squashfs"
-version = "0.1.0"
 authors = ["疯魔慕薇 <kfanjian@gmail.com>"]
-edition = "2018"
 documentation = "https://docs.rs/squashfs"
-repository = "https://github.com/kofj/rust-squashfs"
-readme = "README.md"
+edition = "2018"
 keywords = ["squashfs", "sqs"]
 license = "MIT"
+name = "squashfs"
+readme = "README.md"
+repository = "https://github.com/kofj/rust-squashfs"
+version = "0.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 bitflags = "1.2.1"
+prettytable-rs = "^0.8"
 serde = "1.0.126"
 serde_derive = "1.0.126"
 smart-default = "0.6.0"
+
+[dev-dependencies]

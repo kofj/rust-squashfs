@@ -36,6 +36,8 @@ extern crate bitflags;
 extern crate serde_derive;
 #[macro_use]
 extern crate smart_default;
+#[macro_use]
+extern crate prettytable;
 
 use std::fs::File;
 use std::io::{Read, Seek};

@@ -5,6 +5,12 @@ use std::io::{Read, Result, SeekFrom};
 const ID_ENTRY_SIZE: usize = 4;
 
 /// read gid/uid lookup table.
+/// To read gids/uids lookup table,
+/// 1. Get start of the index from the `Superblock`;
+/// 2. Calculate table size via `id_count*ID_ENTRY_SIZE`;
+/// 3. Calculate meta blocks number;
+/// 4. Read the indexs, they are uncompressed, one index per metablock of the table, 8 bytes each(u64);
+/// 5. Read the table.
 pub fn read_lookup_table(r: &mut SqsIoReader, sb: Superblock) -> Result<()> {
   if sb.id_count == 0 {
     return Ok(());
@@ -15,7 +21,7 @@ pub fn read_lookup_table(r: &mut SqsIoReader, sb: Superblock) -> Result<()> {
   let mut buf = vec![0u8; blocks * 8];
   r.seek(SeekFrom::Start(sb.id_table_start))?;
   r.read_exact(&mut buf)?;
-  warn!("{:#x?}", buf);
+  trace!("{:#x?}", buf);
 
   let total = buf.len() / 8;
   let mut idx = 0;

@@ -7,7 +7,7 @@ A pure rust implement of squashfs library.
 - [x] Parse squashfs `Superblock`.
 - [x] Parse `fragment table`.
 - [ ] Parse `xattrs table`.
-- [ ] Parse `uid/gid lookup table`.
+- [x] Parse `uid/gid lookup table`.
 - [ ] Parse `inode table`.
 - [ ] Parse `directory table`.
 - [ ] Parse `export table`.

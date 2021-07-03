@@ -47,6 +47,7 @@ use std::io::{Read, Result, Seek};
 
 pub mod compress;
 pub mod fragment;
+pub mod inode;
 pub mod layout;
 pub mod metadata;
 pub mod uidgids;
@@ -54,6 +55,7 @@ pub mod utils;
 pub mod xattrs;
 
 pub use fragment::*;
+pub use inode::*;
 pub use layout::*;
 pub use log::LevelFilter;
 pub use metadata::*;

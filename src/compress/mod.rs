@@ -1,4 +1,4 @@
-use flate2::read::GzDecoder;
+use flate2::bufread::{GzDecoder, ZlibDecoder};
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use std::borrow::Cow;
@@ -45,13 +45,37 @@ pub fn compress(raw: &[u8], algorithm: Algorithm) -> Result<(Cow<[u8]>, bool)> {
   Ok((Cow::Owned(compressed), true))
 }
 
+/// ZLIB/GZIP headers
+/// Level | ZLIB  | GZIP
+///  1   | 78 01 | 1F 8B
+///  2   | 78 5E | 1F 8B
+///  3   | 78 5E | 1F 8B
+///  4   | 78 5E | 1F 8B
+///  5   | 78 5E | 1F 8B
+///  6   | 78 9C | 1F 8B
+///  7   | 78 DA | 1F 8B
+///  8   | 78 DA | 1F 8B
+///  9   | 78 DA | 1F 8B
 pub fn decompress(raw: &[u8], output: &mut [u8], algorithm: Algorithm) -> Result<usize> {
   match algorithm {
     Algorithm::Gzip => {
-      let mut gzd = GzDecoder::new(raw);
-      gzd.read_exact(output)?;
-
-      Ok(output.len())
+      trace!(
+        "[decompress] Gzip header={:X?} isZlib={}",
+        &raw[0..1],
+        &raw[0..1] == &[0x78]
+      );
+      match raw[0..1] {
+        [0x78] => {
+          let mut zlib = ZlibDecoder::new(raw);
+          let size = zlib.read(output)?;
+          Ok(size)
+        }
+        _ => {
+          let mut gzd = GzDecoder::new(raw);
+          gzd.read_exact(output)?;
+          Ok(output.len())
+        }
+      }
     }
     _ => Ok(output.len()),
   }

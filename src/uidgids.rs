@@ -3,6 +3,7 @@ use byteorder::{ByteOrder, LittleEndian};
 use std::io::{Read, Result, SeekFrom};
 
 const ID_ENTRY_SIZE: usize = 4;
+type IdTab = Vec<u32>;
 
 /// read gid/uid lookup table.
 /// To read gids/uids lookup table,
@@ -11,9 +12,9 @@ const ID_ENTRY_SIZE: usize = 4;
 /// 3. Calculate meta blocks number;
 /// 4. Read the indexs, they are uncompressed, one index per metablock of the table, 8 bytes each(u64);
 /// 5. Read the table.
-pub fn read_lookup_table(r: &mut SqsIoReader, sb: Superblock) -> Result<()> {
+pub fn read_lookup_table(r: &mut SqsIoReader, sb: Superblock) -> Result<IdTab> {
   if sb.id_count == 0 {
-    return Ok(());
+    return Ok(vec![]);
   }
   let table_size = ID_ENTRY_SIZE * sb.id_count as usize;
   let blocks = (table_size - 1) / METADATA_BLOCK_SIZE + 1;
@@ -38,14 +39,10 @@ pub fn read_lookup_table(r: &mut SqsIoReader, sb: Superblock) -> Result<()> {
     data.extend(uncompressed.iter());
   }
 
-  parse_id_tab(&mut &*data)?;
-
-  Ok(())
+  Ok(parse_id_tab(&mut &*data)?)
 }
 
-type IdTab = Vec<u32>;
-
-pub fn parse_id_tab(raw: &mut &[u8]) -> Result<Vec<u32>> {
+pub fn parse_id_tab(raw: &mut &[u8]) -> Result<IdTab> {
   let count = raw.len() / 4;
   let mut entries = IdTab::with_capacity(count);
   unsafe {

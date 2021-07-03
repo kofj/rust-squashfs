@@ -44,7 +44,7 @@ pub fn read_fragment_table(r: &mut SqsIoReader, sb: Superblock) -> Result<Fragme
     trace!("block={} buf={:?}", blocks, buf);
 
     let offset = LittleEndian::read_u64(&buf);
-    let metadata: &[u8] = &read_meta_block(r, sb.compressor, offset)?;
+    let (metadata, _) = read_meta_block(r, sb.compressor, offset)?;
 
     let total = metadata.len() / FRAGMENT_SIZE;
     let mut idx = 0;

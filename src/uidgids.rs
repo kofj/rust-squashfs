@@ -30,7 +30,7 @@ pub fn read_lookup_table(r: &mut SqsIoReader, sb: Superblock) -> Result<IdTab> {
   while idx < total {
     let location = LittleEndian::read_u64(&buf[idx * 8..(idx + 1) * 8]);
     idx += 1;
-    let uncompressed = read_meta_block(r, sb.compressor, location)?;
+    let (uncompressed, _) = read_meta_block(r, sb.compressor, location)?;
     trace!(
       "[lookup tab] location={}, uncompressed.data={:x?}",
       location,

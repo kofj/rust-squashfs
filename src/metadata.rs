@@ -8,7 +8,7 @@ pub fn read_meta_block(
   r: &mut SqsIoReader,
   algorithm: compress::Algorithm,
   location: u64,
-) -> Result<Vec<u8>> {
+) -> Result<(Vec<u8>, u16)> {
   let mut header_bytes = [0u8; 2];
 
   r.seek(SeekFrom::Start(location))?;
@@ -39,7 +39,7 @@ pub fn read_meta_block(
     let (temp, _) = output.split_at(desize);
     output = temp.to_vec();
   } else {
-    return Ok(buf);
+    return Ok((buf, size + 2));
   }
 
   trace!(
@@ -48,7 +48,7 @@ pub fn read_meta_block(
     output
   );
 
-  Ok(output)
+  Ok((output, size + 2))
 }
 
 /// returns data size and is compresseds

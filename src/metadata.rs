@@ -2,6 +2,8 @@ use super::*;
 use byteorder::{ByteOrder, LittleEndian};
 use std::io::{Result, SeekFrom};
 
+pub const METADATA_BLOCK_SIZE: usize = 8192;
+
 pub fn read_meta_block(
   r: &mut SqsIoReader,
   algorithm: compress::Algorithm,
@@ -31,11 +33,13 @@ pub fn read_meta_block(
     buf
   );
 
-  let mut output = vec![0u8; 8192];
+  let mut output = vec![0u8; METADATA_BLOCK_SIZE];
   if compressed {
     let desize = compress::decompress(&mut buf, &mut output, algorithm)?;
     let (temp, _) = output.split_at(desize);
     output = temp.to_vec();
+  } else {
+    return Ok(buf);
   }
 
   trace!(

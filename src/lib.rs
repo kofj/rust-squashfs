@@ -49,12 +49,14 @@ pub mod compress;
 pub mod fragment;
 pub mod layout;
 pub mod metadata;
+pub mod uidgids;
 pub mod utils;
 
 pub use fragment::*;
 pub use layout::*;
 pub use log::LevelFilter;
 pub use metadata::*;
+pub use uidgids::*;
 pub use utils::errors::*;
 
 pub trait SqsIoRead: Read + Seek {}

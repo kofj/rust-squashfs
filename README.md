@@ -4,6 +4,17 @@ A pure rust implement of squashfs library.
 
 ## Roadmap
 
-- [ ] Parse squashfs superblock.
-
-- [ ] Support gzip compressor.
+- [x] Parse squashfs `Superblock`.
+- [x] Parse `fragment table`.
+- [ ] Parse `xattrs table`.
+- [ ] Parse `uid/gid lookup table`.
+- [ ] Parse `inode table`.
+- [ ] Parse `directory table`.
+- [ ] Parse `export table`.
+- [ ] Multiple Compressors:
+  - [x] `gzip` algorithm.
+  - [ ] `lzma` algorithm.
+  - [ ] `lzo` algorithm.
+  - [ ] `xz` algorithm.
+  - [ ] `lz4` algorithm.
+  - [ ] `zstd` algorithm.

@@ -4,6 +4,40 @@ use std::io::{Result, SeekFrom};
 
 pub const METADATA_BLOCK_SIZE: usize = 8192;
 
+pub fn read_metadata(
+  r: &mut SqsIoReader,
+  algorithm: compress::Algorithm,
+  first_block: u64,
+  block_offset: u32,
+  byte_offset: u32,
+  size: usize,
+) -> Result<Vec<u8>> {
+  let mut buf = vec![];
+  let mut location = first_block + block_offset as u64;
+
+  // read first block
+  let (meta, next_block_offset) = read_meta_block(r, algorithm, location as u64)?;
+  location = next_block_offset as u64;
+  buf.extend(&meta[(byte_offset as usize)..]);
+
+  // maybe cross many block, read them all.
+  let mut i = 1;
+  while buf.len() < size {
+    debug!(
+      "[read_metadata.read-{}] location={}, buf.size={}\n",
+      i,
+      location,
+      buf.len()
+    );
+    let (meta, next_block_offset) = read_meta_block(r, algorithm, location as u64)?;
+    location = next_block_offset as u64;
+    buf.extend(meta);
+    i += 1;
+  }
+
+  Ok(buf)
+}
+
 pub fn read_meta_block(
   r: &mut SqsIoReader,
   algorithm: compress::Algorithm,

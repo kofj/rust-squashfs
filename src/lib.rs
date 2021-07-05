@@ -1,32 +1,41 @@
-/// https://www.kernel.org/doc/Documentation/filesystems/squashfs.txt
-/// > A squashfs filesystem consists of a maximum of nine parts, packed together on a byte alignment:
-///  ---------------
-/// |  superblock   |
-/// |---------------|
-/// |  compression  |
-/// |    options    |
-/// |---------------|
-/// |  datablocks   |
-/// |  & fragments  |
-/// |---------------|
-/// |  inode table  |
-/// |---------------|
-/// |   directory   |
-/// |     table     |
-/// |---------------|
-/// |   fragment    |
-/// |    table      |
-/// |---------------|
-/// |    export     |
-/// |    table      |
-/// |---------------|
-/// |    uid/gid    |
-/// |  lookup table |
-/// |---------------|
-/// |     xattr     |
-/// |     table     |
-///  ---------------
-///
+//!
+//! ## squashfs layout
+//! >
+//! > A squashfs filesystem consists of a maximum of nine parts, packed together on a byte alignment:
+//! >
+//! ```text
+//!  ---------------
+//! |  superblock   |
+//! |---------------|
+//! |  compression  |
+//! |    options    |
+//! |---------------|
+//! |  datablocks   |
+//! |  & fragments  |
+//! |---------------|
+//! |  inode table  |
+//! |---------------|
+//! |   directory   |
+//! |     table     |
+//! |---------------|
+//! |   fragment    |
+//! |    table      |
+//! |---------------|
+//! |    export     |
+//! |    table      |
+//! |---------------|
+//! |    uid/gid    |
+//! |  lookup table |
+//! |---------------|
+//! |     xattr     |
+//! |     table     |
+//!  ---------------
+//! ```
+//!
+//! ## References
+//! - https://www.kernel.org/doc/Documentation/filesystems/squashfs.txt
+//! - https://dr-emann.github.io/squashfs/
+//!
 
 #[macro_use]
 extern crate bitflags;

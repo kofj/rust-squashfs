@@ -115,7 +115,7 @@ mod tests {
             if let Ok(env) = std::env::var("TEST_SQS_FILE").map_err(|e| map_other_error!(e)) {
                 env
             } else {
-                String::from("tests/data/gzip.sqs")
+                String::from("tests/data/gzip-sqs")
             };
         let f = File::open(test_sqs_file).map_err(|e| map_error!(e))?;
         let mut reader = Box::new(f.try_clone()?) as SqsIoReader;

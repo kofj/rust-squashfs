@@ -496,7 +496,7 @@ mod tests {
   use std::io::Result;
 
   #[test]
-  // #[cfg_attr(not(feature = "gzip.sqs"), ignore)]
+  // #[cfg_attr(not(feature = "gzip-sqs"), ignore)]
   fn test_get_inode() -> Result<()> {
     // TODO
     let (mut reader, sb) = prepare_tests()?;

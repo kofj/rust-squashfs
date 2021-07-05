@@ -1,4 +1,5 @@
 # rust-squashfs 
+[![](https://img.shields.io/crates/v/squashfs.svg)](https://crates.io/crates/squashfs) [![Docs](https://docs.rs/squashfs/badge.svg)](https://docs.rs/squashfs)
 
 A pure rust implement of squashfs library.
 

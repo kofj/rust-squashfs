@@ -96,7 +96,7 @@ mod tests {
   use std::io::Result;
 
   #[test]
-  #[cfg_attr(not(feature = "gzip.sqs"), ignore)]
+  #[cfg_attr(not(feature = "gzip-sqs"), ignore)]
   fn test_read_fragment_table() -> Result<()> {
     prepare_tests()?;
     let (mut reader, sb) = prepare_tests()?;

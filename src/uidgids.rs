@@ -65,7 +65,7 @@ mod tests {
   use std::io::Result;
 
   #[test]
-  #[cfg_attr(not(feature = "gzip.sqs"), ignore)]
+  #[cfg_attr(not(feature = "gzip-sqs"), ignore)]
   fn test_lookup_table() -> Result<()> {
     let (mut reader, sb) = prepare_tests()?;
     read_lookup_table(&mut reader, sb)?;
